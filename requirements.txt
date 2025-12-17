@@ -1,0 +1,14 @@
+# DeepSeek-OCR RunPod Dependencies
+# Note: vLLM is installed from nightly builds in Dockerfile
+
+# RunPod serverless SDK
+runpod>=1.6.0
+
+# Image processing
+pillow>=10.0.0
+
+# Model download
+huggingface_hub>=0.20.0
+
+# Flash attention (for vLLM)
+flash-attn==2.7.3
