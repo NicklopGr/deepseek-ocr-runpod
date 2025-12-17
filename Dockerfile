@@ -28,19 +28,18 @@ RUN apt-get update && apt-get install -y \
     python3.12 \
     python3.12-dev \
     python3.12-venv \
-    python3-pip \
+    python3.12-distutils \
     git \
     curl \
     wget \
     poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.12 as default
+# Set Python 3.12 as default and install pip via ensurepip
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
-
-# Upgrade pip
-RUN python -m pip install --upgrade pip setuptools wheel
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
+    && python -m ensurepip --upgrade \
+    && python -m pip install --upgrade pip setuptools wheel
 
 # Install PyTorch 2.6.0 with CUDA 11.8 (official DeepSeek-OCR requirement)
 RUN pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
