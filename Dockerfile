@@ -54,10 +54,11 @@ RUN pip install --no-cache-dir \
     torchaudio==2.6.0 \
     --index-url https://download.pytorch.org/whl/cu124
 
-# Install flash-attention 2.7.3 (OFFICIAL version for DeepSeek-OCR)
+# Install flash-attention from pre-built wheel (building from source fails)
+# Using mjun0812/flash-attention-prebuild-wheels for PyTorch 2.6 + CUDA 12.4
 # Required for _attn_implementation="flash_attention_2"
 RUN pip install --no-cache-dir ninja packaging
-RUN pip install --no-cache-dir flash-attn==2.7.3 --no-build-isolation
+RUN pip install --no-cache-dir https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.6.4/flash_attn-2.7.4+cu124torch2.6-cp311-cp311-linux_x86_64.whl
 
 # Install Transformers and dependencies (NOT vLLM - using native Transformers)
 RUN pip install --no-cache-dir \
