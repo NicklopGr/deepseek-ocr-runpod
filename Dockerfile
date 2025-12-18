@@ -2,17 +2,18 @@
 #
 # Model: deepseek-ai/DeepSeek-OCR (3B params, BF16)
 # Inference: Transformers with Gundam mode (NOT vLLM)
-# Environment: CUDA 12.4 + PyTorch 2.6.0 + Flash Attention 2
+# Environment: CUDA 11.8 + PyTorch 2.6.0 + Flash Attention 2.7.3
+#
+# Official DeepSeek-OCR tested stack:
+#   - PyTorch 2.6.0, Transformers 4.46.3, Flash Attention 2.7.3, CUDA 11.8
 #
 # Gundam mode parameters (matches HF demo exactly):
 #   base_size=1024, image_size=640, crop_mode=True
 #   eval_mode=True, test_compress=True, save_results=True
 #
-# This gives highest quality OCR output for documents.
-#
 # GPU: A100/A10/L40S recommended (needs ~8GB VRAM)
 
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -47,25 +48,27 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
 # Upgrade pip
 RUN python -m pip install --upgrade pip setuptools wheel
 
-# Install PyTorch 2.6.0 with CUDA 12.4 support
+# Install PyTorch 2.6.0 with CUDA 11.8 support (OFFICIAL DeepSeek-OCR stack)
 RUN pip install --no-cache-dir \
     torch==2.6.0 \
     torchvision==0.21.0 \
     torchaudio==2.6.0 \
-    --index-url https://download.pytorch.org/whl/cu124
+    --index-url https://download.pytorch.org/whl/cu118
 
-# Install flash-attention from pre-built wheel (building from source fails)
-# Using mjun0812/flash-attention-prebuild-wheels for PyTorch 2.6 + CUDA 12.4
+# Install flash-attention 2.7.3 (OFFICIAL DeepSeek-OCR version)
 # Required for _attn_implementation="flash_attention_2"
+# Using MAX_JOBS=4 to limit parallel compilation and avoid OOM
 RUN pip install --no-cache-dir ninja packaging
-RUN pip install --no-cache-dir https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.6.4/flash_attn-2.7.4+cu124torch2.6-cp311-cp311-linux_x86_64.whl
+ENV MAX_JOBS=4
+RUN pip install --no-cache-dir flash-attn==2.7.3 --no-build-isolation
 
 # Install Transformers and dependencies (NOT vLLM - using native Transformers)
+# Pin transformers to 4.46.3 (official DeepSeek-OCR tested version)
 RUN pip install --no-cache-dir \
     runpod \
     pillow \
     huggingface_hub \
-    transformers \
+    transformers==4.46.3 \
     accelerate \
     safetensors
 
