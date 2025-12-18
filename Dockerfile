@@ -63,16 +63,22 @@ ENV MAX_JOBS=4
 RUN pip install --no-cache-dir flash-attn==2.7.3 --no-build-isolation
 
 # Install Transformers and dependencies (NOT vLLM - using native Transformers)
-# Pin transformers to 4.46.3 (official DeepSeek-OCR tested version)
-# addict is required by DeepSeek-OCR's custom model code
+# Official DeepSeek-OCR requirements.txt from:
+# https://raw.githubusercontent.com/deepseek-ai/DeepSeek-OCR/main/requirements.txt
 RUN pip install --no-cache-dir \
     runpod \
-    pillow \
     huggingface_hub \
-    transformers==4.46.3 \
     accelerate \
     safetensors \
-    addict
+    transformers==4.46.3 \
+    tokenizers==0.20.3 \
+    PyMuPDF \
+    img2pdf \
+    einops \
+    easydict \
+    addict \
+    Pillow \
+    numpy
 
 # Download model at build time to bake into image
 # This avoids download delays on cold starts (~2.5GB model)
