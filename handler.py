@@ -10,7 +10,7 @@ Model: deepseek-ai/DeepSeek-OCR
 - 97% OCR precision at <10x compression ratio
 - ~2500 tokens/s on A100-40G
 
-Input: {"image_base64": "..."}
+Input: {"image_base64": "...", "prompt": "optional custom prompt"}
 Output: {"markdown": "..."}
 """
 
@@ -38,6 +38,10 @@ llm = LLM(
 print(f"[DeepSeek-OCR] Model loaded in {time.time() - start_load:.2f}s")
 
 
+# Default prompt for markdown extraction with grounding
+DEFAULT_PROMPT = "<image>\n<|grounding|>Convert the document to markdown."
+
+
 def handler(job):
     """
     Process a single image with DeepSeek-OCR Gundam mode.
@@ -45,6 +49,7 @@ def handler(job):
     Args:
         job: RunPod job with input containing:
             - image_base64: Base64 encoded image (PNG/JPG)
+            - prompt: Optional custom prompt (defaults to markdown conversion)
 
     Returns:
         dict with:
@@ -57,6 +62,10 @@ def handler(job):
         job_input = job.get("input", {})
         image_base64 = job_input.get("image_base64")
 
+        # Support custom prompt override
+        custom_prompt = job_input.get("prompt")
+        prompt = custom_prompt if custom_prompt else DEFAULT_PROMPT
+
         if not image_base64:
             return {"error": "Missing image_base64 in input"}
 
@@ -65,9 +74,8 @@ def handler(job):
         image = Image.open(io.BytesIO(image_data)).convert("RGB")
 
         print(f"[DeepSeek-OCR] Processing image: {image.size[0]}x{image.size[1]}")
-
-        # Gundam mode prompt for markdown extraction with grounding
-        prompt = "<image>\n<|grounding|>Convert the document to markdown."
+        if custom_prompt:
+            print(f"[DeepSeek-OCR] Using custom prompt: {prompt[:100]}...")
 
         # Sampling parameters optimized for OCR
         sampling_params = SamplingParams(
