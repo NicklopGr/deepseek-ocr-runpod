@@ -1,8 +1,14 @@
-# DeepSeek-OCR RunPod Serverless Container
+# DeepSeek-OCR RunPod Serverless Container - Gundam Mode (Transformers)
 #
 # Model: deepseek-ai/DeepSeek-OCR (3B params, BF16)
-# Inference: vLLM with Gundam mode
-# Environment: CUDA 11.8 + PyTorch 2.6.0 (OFFICIAL)
+# Inference: Transformers with Gundam mode (NOT vLLM)
+# Environment: CUDA 11.8 + PyTorch 2.6.0 + Flash Attention 2
+#
+# Gundam mode parameters (matches HF demo exactly):
+#   base_size=1024, image_size=640, crop_mode=True
+#   eval_mode=True, test_compress=True, save_results=True
+#
+# This gives highest quality OCR output for documents.
 #
 # GPU: A100/A10/L40S recommended (needs ~8GB VRAM)
 
@@ -21,7 +27,6 @@ ENV RUNPOD_INIT_TIMEOUT=800
 WORKDIR /app
 
 # Install system dependencies including Python 3.11
-# Note: Python 3.12 has issues with some vLLM builds, 3.11 is safer
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     && add-apt-repository ppa:deadsnakes/ppa \
@@ -49,26 +54,26 @@ RUN pip install --no-cache-dir \
     torchaudio==2.6.0 \
     --index-url https://download.pytorch.org/whl/cu118
 
-# Install vLLM nightly (required for DeepSeek-OCR support)
-# DeepSeek-OCR is supported in vLLM 0.8.5+ with CUDA 11.8
-RUN pip install --no-cache-dir --pre vllm --extra-index-url https://wheels.vllm.ai/nightly
+# Install flash-attention 2.7.3 (OFFICIAL version for DeepSeek-OCR)
+# Required for _attn_implementation="flash_attention_2"
+RUN pip install --no-cache-dir ninja packaging
+RUN pip install --no-cache-dir flash-attn==2.7.3 --no-build-isolation
 
-# Note: vLLM nightly includes flash-attention, no need to install separately
-# Skip flash-attn installation to avoid build issues
-
-# Install additional dependencies
+# Install Transformers and dependencies (NOT vLLM - using native Transformers)
 RUN pip install --no-cache-dir \
     runpod \
     pillow \
     huggingface_hub \
-    transformers
+    transformers \
+    accelerate \
+    safetensors
 
 # Download model at build time to bake into image
 # This avoids download delays on cold starts (~2.5GB model)
 RUN python -c "from huggingface_hub import snapshot_download; snapshot_download('deepseek-ai/DeepSeek-OCR')"
 
-# Copy handler
-COPY handler.py /app/handler.py
+# Copy Gundam handler (Transformers-based with model.infer())
+COPY handler_gundam.py /app/handler.py
 
 # Run handler
 CMD ["python", "-u", "handler.py"]
