@@ -2,7 +2,7 @@
 #
 # Model: deepseek-ai/DeepSeek-OCR (3B params, BF16)
 # Inference: Transformers with Gundam mode (NOT vLLM)
-# Environment: CUDA 12.1 + PyTorch 2.6.0 + Flash Attention 2
+# Environment: CUDA 12.4 + PyTorch 2.6.0 + Flash Attention 2
 #
 # Gundam mode parameters (matches HF demo exactly):
 #   base_size=1024, image_size=640, crop_mode=True
@@ -12,7 +12,7 @@
 #
 # GPU: A100/A10/L40S recommended (needs ~8GB VRAM)
 
-FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:12.4.0-cudnn-devel-ubuntu22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -47,12 +47,12 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
 # Upgrade pip
 RUN python -m pip install --upgrade pip setuptools wheel
 
-# Install PyTorch 2.6.0 with CUDA 12.1 support
+# Install PyTorch 2.6.0 with CUDA 12.4 support
 RUN pip install --no-cache-dir \
     torch==2.6.0 \
     torchvision==0.21.0 \
     torchaudio==2.6.0 \
-    --index-url https://download.pytorch.org/whl/cu121
+    --index-url https://download.pytorch.org/whl/cu124
 
 # Install flash-attention 2.7.3 (OFFICIAL version for DeepSeek-OCR)
 # Required for _attn_implementation="flash_attention_2"
