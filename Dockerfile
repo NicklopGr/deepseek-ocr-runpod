@@ -53,12 +53,12 @@ RUN pip install --no-cache-dir \
 # DeepSeek-OCR is supported in vLLM 0.8.5+ with CUDA 11.8
 RUN pip install --no-cache-dir --pre vllm --extra-index-url https://wheels.vllm.ai/nightly
 
-# Install flash-attention (use pre-built wheel to avoid build issues)
-# flash-attn build requires specific CUDA/PyTorch versions to match
+# Install flash-attention from pre-built wheel (avoids build issues)
+# Build from source fails due to CUDA/PyTorch version matching
 RUN pip install --no-cache-dir ninja packaging
-RUN pip install --no-cache-dir flash-attn --no-build-isolation || \
-    echo "flash-attn install failed, trying without version pin" && \
-    pip install --no-cache-dir flash-attn
+RUN pip install --no-cache-dir \
+    https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu118torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl || \
+    pip install --no-cache-dir flash-attn --no-build-isolation
 
 # Install additional dependencies
 RUN pip install --no-cache-dir \
