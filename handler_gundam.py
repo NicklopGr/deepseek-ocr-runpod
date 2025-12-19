@@ -13,8 +13,11 @@ Output: {"markdown": "..."}
 
 Key difference from vLLM handler:
 - Uses model.infer() with Gundam mode parameters
-- Supports base_size, image_size, crop_mode, eval_mode
+- Supports base_size, image_size, crop_mode (matches HF demo exactly)
 - Better quality but slightly slower than vLLM
+
+IMPORTANT: Do NOT add extra parameters like save_results, test_compress, eval_mode
+These are NOT used in the official HF demo and may cause missing rows.
 """
 
 import runpod
@@ -96,8 +99,10 @@ def handler(job):
             temp_image_path = os.path.join(temp_dir, "input.png")
             image.save(temp_image_path)
 
-            # Gundam mode parameters (matches HF demo exactly)
-            # This is what makes DeepSeek-OCR work well for documents
+            # Gundam mode parameters (matches HF demo EXACTLY)
+            # HF demo: https://huggingface.co/spaces/merterbak/deepseek-ocr-demo
+            # IMPORTANT: Do NOT add extra parameters like save_results, test_compress, eval_mode
+            # These are NOT used in the official demo and may affect output quality
             markdown = model.infer(
                 tokenizer,
                 prompt=prompt,
@@ -106,9 +111,6 @@ def handler(job):
                 base_size=1024,      # Gundam: base resolution
                 image_size=640,      # Gundam: target resolution
                 crop_mode=True,      # Gundam: crop for detail
-                save_results=True,   # Save intermediate results
-                test_compress=True,  # Test compression mode
-                eval_mode=True,      # Evaluation mode for quality
             )
 
         processing_time = time.time() - start_time
