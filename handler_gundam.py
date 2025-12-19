@@ -98,9 +98,9 @@ def handler(job):
             temp_image_path = os.path.join(temp_dir, "input.png")
             image.save(temp_image_path)
 
-            # Gundam mode parameters - production recommended settings
-            # Based on DeepWiki, Unsloth docs, and GitHub examples (Dec 2025)
-            # NOTE: eval_mode was removed - it's NOT a valid parameter
+            # Gundam mode parameters - production settings
+            # save_results=False to get direct return (True returns None + writes to disk)
+            # test_compress=False for standard inference (True is for diagnostics)
             markdown = model.infer(
                 tokenizer,
                 prompt=prompt,
@@ -109,8 +109,8 @@ def handler(job):
                 base_size=1024,      # Gundam: base resolution
                 image_size=640,      # Gundam: target resolution
                 crop_mode=True,      # Gundam: crop for detail
-                save_results=True,   # Outputs cropped regions for inspection
-                test_compress=True,  # Compression ratio diagnostics
+                save_results=False,  # Return markdown directly (not to disk)
+                test_compress=False, # Standard inference mode
             )
 
         processing_time = time.time() - start_time
