@@ -29,6 +29,8 @@ import io
 import tempfile
 import os
 import time
+import sys
+from io import StringIO
 
 print("[DeepSeek-OCR Gundam] Loading model and tokenizer...")
 start_load = time.time()
@@ -99,19 +101,38 @@ def handler(job):
             temp_image_path = os.path.join(temp_dir, "input.png")
             image.save(temp_image_path)
 
-            # Gundam mode parameters (matches HF demo EXACTLY)
-            # HF demo: https://huggingface.co/spaces/merterbak/deepseek-ocr-demo
-            # IMPORTANT: Do NOT add extra parameters like save_results, test_compress, eval_mode
-            # These are NOT used in the official demo and may affect output quality
-            markdown = model.infer(
-                tokenizer,
-                prompt=prompt,
-                image_file=temp_image_path,
-                output_path=temp_dir,
-                base_size=1024,      # Gundam: base resolution
-                image_size=640,      # Gundam: target resolution
-                crop_mode=True,      # Gundam: crop for detail
-            )
+            # Capture stdout - model.infer() prints to stdout instead of returning
+            # This matches the HF demo approach exactly
+            old_stdout = sys.stdout
+            sys.stdout = captured_output = StringIO()
+
+            try:
+                # Gundam mode parameters (matches HF demo EXACTLY)
+                # HF demo: https://huggingface.co/spaces/merterbak/deepseek-ocr-demo
+                # IMPORTANT: Do NOT add extra parameters like save_results, test_compress, eval_mode
+                # These are NOT used in the official demo and may affect output quality
+                model.infer(
+                    tokenizer,
+                    prompt=prompt,
+                    image_file=temp_image_path,
+                    output_path=temp_dir,
+                    base_size=1024,      # Gundam: base resolution
+                    image_size=640,      # Gundam: target resolution
+                    crop_mode=True,      # Gundam: crop for detail
+                )
+            finally:
+                sys.stdout = old_stdout
+
+            # Get the captured output and filter out debug lines (matches HF demo)
+            raw_output = captured_output.getvalue()
+            # Filter out debug/progress lines that aren't part of the markdown
+            markdown_lines = []
+            for line in raw_output.split('\n'):
+                # Skip debug lines (same filter as HF demo)
+                if any(s in line for s in ['image:', 'other:', 'PATCHES', '====', 'BASE:', '%|', 'torch.Size']):
+                    continue
+                markdown_lines.append(line)
+            markdown = '\n'.join(markdown_lines)
 
         processing_time = time.time() - start_time
 
