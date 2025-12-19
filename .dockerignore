@@ -1,0 +1,22 @@
+# Git files
+.git
+.gitignore
+
+# Local development
+*.pyc
+__pycache__
+.env
+.env.*
+
+# Documentation
+*.md
+README*
+LICENSE
+
+# IDE
+.vscode
+.idea
+
+# Other handlers (only handler_gundam.py is needed)
+handler.py
+requirements.txt

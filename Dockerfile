@@ -9,7 +9,6 @@
 #
 # Gundam mode parameters (matches HF demo exactly):
 #   base_size=1024, image_size=640, crop_mode=True
-#   eval_mode=True, test_compress=True, save_results=True
 #
 # GPU: A100/A10/L40S recommended (needs ~8GB VRAM)
 
@@ -57,9 +56,9 @@ RUN pip install --no-cache-dir \
 
 # Install flash-attention 2.7.3 (OFFICIAL DeepSeek-OCR version)
 # Required for _attn_implementation="flash_attention_2"
-# Using MAX_JOBS=4 to limit parallel compilation and avoid OOM
+# Limit to 2 parallel jobs to prevent OOM (each job uses ~8-9GB RAM)
 RUN pip install --no-cache-dir ninja packaging
-ENV MAX_JOBS=4
+ENV MAX_JOBS=2
 RUN pip install --no-cache-dir flash-attn==2.7.3 --no-build-isolation
 
 # Install Transformers and dependencies (NOT vLLM - using native Transformers)
