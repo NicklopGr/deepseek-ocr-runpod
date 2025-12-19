@@ -13,11 +13,10 @@ Output: {"markdown": "..."}
 
 Key difference from vLLM handler:
 - Uses model.infer() with Gundam mode parameters
-- Supports base_size, image_size, crop_mode (matches HF demo exactly)
+- Supports base_size, image_size, crop_mode, save_results, test_compress
 - Better quality but slightly slower than vLLM
 
-IMPORTANT: Do NOT add extra parameters like save_results, test_compress, eval_mode
-These are NOT used in the official HF demo and may cause missing rows.
+NOTE: eval_mode is NOT a valid parameter for model.infer() - removed Dec 2025
 """
 
 import runpod
@@ -29,8 +28,6 @@ import io
 import tempfile
 import os
 import time
-import sys
-from io import StringIO
 
 print("[DeepSeek-OCR Gundam] Loading model and tokenizer...")
 start_load = time.time()
@@ -101,38 +98,20 @@ def handler(job):
             temp_image_path = os.path.join(temp_dir, "input.png")
             image.save(temp_image_path)
 
-            # Capture stdout - model.infer() prints to stdout instead of returning
-            # This matches the HF demo approach exactly
-            old_stdout = sys.stdout
-            sys.stdout = captured_output = StringIO()
-
-            try:
-                # Gundam mode parameters (matches HF demo EXACTLY)
-                # HF demo: https://huggingface.co/spaces/merterbak/deepseek-ocr-demo
-                # IMPORTANT: Do NOT add extra parameters like save_results, test_compress, eval_mode
-                # These are NOT used in the official demo and may affect output quality
-                model.infer(
-                    tokenizer,
-                    prompt=prompt,
-                    image_file=temp_image_path,
-                    output_path=temp_dir,
-                    base_size=1024,      # Gundam: base resolution
-                    image_size=640,      # Gundam: target resolution
-                    crop_mode=True,      # Gundam: crop for detail
-                )
-            finally:
-                sys.stdout = old_stdout
-
-            # Get the captured output and filter out debug lines (matches HF demo)
-            raw_output = captured_output.getvalue()
-            # Filter out debug/progress lines that aren't part of the markdown
-            markdown_lines = []
-            for line in raw_output.split('\n'):
-                # Skip debug lines (same filter as HF demo)
-                if any(s in line for s in ['image:', 'other:', 'PATCHES', '====', 'BASE:', '%|', 'torch.Size']):
-                    continue
-                markdown_lines.append(line)
-            markdown = '\n'.join(markdown_lines)
+            # Gundam mode parameters - production recommended settings
+            # Based on DeepWiki, Unsloth docs, and GitHub examples (Dec 2025)
+            # NOTE: eval_mode was removed - it's NOT a valid parameter
+            markdown = model.infer(
+                tokenizer,
+                prompt=prompt,
+                image_file=temp_image_path,
+                output_path=temp_dir,
+                base_size=1024,      # Gundam: base resolution
+                image_size=640,      # Gundam: target resolution
+                crop_mode=True,      # Gundam: crop for detail
+                save_results=True,   # Outputs cropped regions for inspection
+                test_compress=True,  # Compression ratio diagnostics
+            )
 
         processing_time = time.time() - start_time
 
